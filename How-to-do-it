@@ -1,0 +1,137 @@
+# Developer Journey: Integrating ReliPay Auth in a Next.js App
+
+When building modern SaaS applications, setting up a secure, reliable authentication system is often one of the first major hurdles. In this blog post, I'll walk through my experience building a secure **Login + Registration system** with **Route Protection** using Next.js (App Router, React 19) and **ReliPay**, including the real-world debugging steps we took to resolve package and environment issues.
+
+---
+
+## 🔍 What is ReliPay?
+
+**ReliPay** (found at [relipay.dev](https://relipay.dev)) is a self-hostable, developer-focused authentication and billing infrastructure platform. It acts as an open-source, self-hostable alternative to services like Clerk and Auth0 for auth, and Stripe Checkout for billing.
+
+Key features include:
+*   **Authentication**: End-to-end user auth (Email/Password, OAuth, Passkeys/WebAuthn, and MFA) out of the box.
+*   **Billing Abstraction**: Unified APIs that hook into multiple payment providers (Stripe, PayPal, Razorpay) under a single database schema.
+*   **Edge-Ready Next.js SDK**: Built-in support for Next.js App Router, offering lightweight Edge-runtime middleware and Node.js-runtime server actions.
+*   **AI-First Developer Experience**: Detailed SDK error payloads containing not just code messages, but actionable `fix` suggestions for developers or AI coding assistants.
+
+---
+
+## 🛠️ The Setup Process
+
+We integrated the authentication flow in a Next.js App Router workspace using React 19.
+
+### 1. Environment Configuration
+To manage API credentials, we created a `.env.local` file to store our environment keys:
+```env
+RELIPAY_URL=https://api.relipay.dev
+RELIPAY_SECRET=rp_test_your_secret_key_here
+```
+
+### 2. Dependency Installation
+We installed the official SDK packages:
+```bash
+npm install @relipay/nextjs @relipay/react @relipay/node --legacy-peer-deps
+```
+
+---
+
+## ⚠️ Problems Encountered & Solutions
+
+No software integration is without its bugs. Here are the specific roadblocks we hit during this build and how we resolved them:
+
+### Problem 1: Next.js Version Peer Conflicts
+*   **The Issue**: The `@relipay/nextjs` package expects a peer dependency of `next: "^14.0.0 || ^15.0.0"`, but our project is running the latest **Next.js 16.2.9**. A simple `npm install` failed with an `ERESOLVE` error.
+*   **The Solution**: We bypassed the peer check by appending `--legacy-peer-deps` to the install command:
+    ```bash
+    npm install @relipay/nextjs @relipay/react @relipay/node --legacy-peer-deps
+    ```
+    Since Next.js App Router concepts remain compatible, the server actions and middleware libraries worked flawlessly on the newer version.
+
+### Problem 2: Docker Environment and Local Stack Missing
+*   **The Issue**: The default SDK setup assumes you are running a local self-hosted ReliPay stack via Docker Compose (`docker compose up`) on `http://localhost:3030`. Trying to run the app resulted in a `TypeError: fetch failed` caused by `ECONNREFUSED`. Running `docker compose` failed because Docker was not installed or configured in the system PATH.
+*   **The Solution**: We pivoted to the hosted cloud sandbox. We pointed our `RELIPAY_URL` to `https://api.relipay.dev` in `.env.local` and created our Tenant and Application settings on the cloud admin panel at `https://panel.relipay.dev`. This eliminated the local Docker requirement entirely.
+
+### Problem 3: Documentation and Browser Subagent Failures
+*   **The Issue**: A network resolution lookup issue (`could not resolve IP for 127.0.0.1`) prevented the AI agent's browser tools from opening the online docs at `https://relipay.dev/docs`.
+*   **The Solution**: Instead of guessing the API structures, we inspected the local workspace's `node_modules` folders. We found that the ReliPay SDK packages ship with dedicated `AGENTS.md` documentation guides and complete TypeScript definitions directly inside `@relipay/nextjs` and `@relipay/node`. Reading these files directly gave us a complete, error-free API specification.
+
+---
+
+## 🚀 The Authentication Implementation
+
+Here is how the main functional blocks of the authentication system are structured:
+
+### 1. Route Gating via Middleware
+We protect all dashboard pages using the SDK's Edge-compatible middleware helper:
+```typescript
+// middleware.ts
+import { relipayMiddleware } from '@relipay/nextjs/middleware';
+
+export default relipayMiddleware({
+  publicRoutes: ['/', '/login', '/register'], // Allow unauthenticated access
+  signInUrl: '/login', // Redirect unauthenticated users here
+});
+
+export const config = {
+  matcher: ['/((?!_next|.*\\..*).*)'],
+};
+```
+
+### 2. Register & Login (React 19 Server Actions)
+We kept credential verification entirely on the server using Next.js Server Actions. Using React 19's `useActionState` in client components, we wired up clean user feedback for loading and error states:
+
+```typescript
+// app/register/actions.ts
+'use server';
+
+import { signUp } from '@relipay/nextjs/server';
+import { redirect } from 'next/navigation';
+
+export async function registerAction(prevState: any, formData: FormData) {
+  const email = formData.get('email')?.toString().trim();
+  const password = formData.get('password')?.toString();
+
+  if (!email || !password) return { error: 'Credentials required.' };
+
+  try {
+    // Sets encrypted HttpOnly session cookies automatically on success
+    await signUp({ email, password });
+  } catch (err: any) {
+    return { error: err.message || 'Registration failed.' };
+  }
+  redirect('/dashboard');
+}
+```
+
+### 3. Gated Dashboard & Sign Out
+On our server-component dashboard page, we fetch the active session details using the server-side `auth()` helper, which automatically validates or refreshes the access token:
+
+```typescript
+// app/dashboard/page.tsx
+import { auth } from '@relipay/nextjs/server';
+import { redirect } from 'next/navigation';
+
+export default async function DashboardPage() {
+  const session = await auth();
+  if (!session) redirect('/login');
+
+  const { user } = session;
+  return <h1>Welcome, {user.email}</h1>;
+}
+```
+Logging out is handled via `signOut()` imported from `@relipay/nextjs/server`, which instantly clears the secure browser session cookies.
+
+---
+
+## 🏁 Final Verdict
+
+Integrating **ReliPay** was a pleasant experience. 
+
+*   **Pros**:
+    *   **Simple API surface**: The Next.js SDK provides highly intuitive, drop-in helpers (`auth()`, `signIn()`, `signUp()`, `signOut()`) that completely abstracts cookie encryption and token rotation.
+    *   **AI-Native Developer Flow**: Having descriptive errors with actionable `fix:` suggestions inside the SDK drastically cuts down troubleshooting times.
+    *   **Extreme Flexibility**: The ability to seamlessly switch between local Docker self-hosting and hosted cloud environments (`https://api.relipay.dev`) simply by modifying `.env.local` makes development and deployment incredibly smooth.
+*   **Cons**:
+    *   **Peer Dependency Warnings**: Mismatches can occur if you're running cutting-edge React/Next versions, though they are easily bypassed using legacy npm flags.
+    
+For any developer looking for a secure, self-hostable, or modular auth-and-billing solution for Next.js, **ReliPay** is a highly recommended and robust choice.

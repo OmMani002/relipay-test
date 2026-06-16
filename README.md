@@ -1,36 +1,57 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# ReliPay Next.js Authentication Integration
 
-## Getting Started
+This is a Next.js App Router application integrated with **ReliPay** authentication. It features user registration, secure sign-in, session validation, route protection via middleware, and a protected dashboard page.
 
-First, run the development server:
+---
 
-```bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
+## Architecture & Features
+
+1. **Security**: Uses secure, `httpOnly`, encrypted session cookies (`relipay_access` and `relipay_refresh`) to safeguard tokens against Cross-Site Scripting (XSS).
+2. **Middleware Route Protection**: Gated access using Next.js Middleware. All pages (such as `/dashboard`) are protected by default, except the homepage (`/`), registration (`/register`), and login (`/login`).
+3. **React 19 Server Actions & `useActionState`**: Integrated natively using the latest React 19 forms API. Forms display validation and server SDK errors natively.
+4. **Premium Aesthetics**: Features a dark-themed glassmorphism style system with harmonized indigo colors, custom cards, custom input styling, responsive layouts, and micro-animations.
+
+---
+
+## Setup Instructions
+
+### 1. Prerequisites (ReliPay Instance)
+ReliPay is a self-hostable authentication and billing monolith. Before running the Next.js app, ensure you have a running ReliPay instance:
+- **Local Dev Stack**: Run `docker compose up` on your local ReliPay instance to boot the auth & billing stack (typically running on `http://localhost:3030`).
+- **Configuration**: Visit your ReliPay Administrator Panel, create a **Tenant** and an **Application**, and generate a new **Application API Secret Key**.
+
+### 2. Configure Environment Variables
+Create or verify the `.env.local` file in the root of this project:
+```env
+# The API URL of your ReliPay server
+RELIPAY_URL=http://localhost:3030
+
+# The Application Secret Key (starts with rp_test_ or rp_live_)
+RELIPAY_SECRET=rp_test_your_secret_key_here
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+*Note: Keep `RELIPAY_SECRET` secret and never expose it to client-side components.*
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+### 3. Installation
+If not already installed, install the required packages. Peer dependencies are resolved using `--legacy-peer-deps` due to the Next.js 16 environment:
+```bash
+npm install @relipay/nextjs @relipay/react @relipay/node --legacy-peer-deps
+```
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+### 4. Running the Development Server
+Start the local server:
+```bash
+npm run dev
+```
 
-## Learn More
+Open [http://localhost:3000](http://localhost:3000) in your browser to test the integration.
 
-To learn more about Next.js, take a look at the following resources:
+---
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+## Implementation Details
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
-
-## Deploy on Vercel
-
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
-
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+- **Gating routes**: [middleware.ts](file:///d:/Relipay%20Test/relipay-test/middleware.ts) protects internal paths. It checks for cookie presence and handles login redirection.
+- **Login**: [app/login/page.tsx](file:///d:/Relipay%20Test/relipay-test/app/login/page.tsx) uses the server action in [actions.ts](file:///d:/Relipay%20Test/relipay-test/app/login/actions.ts) which calls `signIn({ email, password })`.
+- **Registration**: [app/register/page.tsx](file:///d:/Relipay%20Test/relipay-test/app/register/page.tsx) uses the server action in [actions.ts](file:///d:/Relipay%20Test/relipay-test/app/register/actions.ts) which calls `signUp({ email, password })`.
+- **Dashboard**: [app/dashboard/page.tsx](file:///d:/Relipay%20Test/relipay-test/app/dashboard/page.tsx) retrieves user credentials with the server-side `auth()` helper, and renders verified statuses.
+- **Logout**: Handled via [app/dashboard/actions.ts](file:///d:/Relipay%20Test/relipay-test/app/dashboard/actions.ts) which calls `signOut()`.
