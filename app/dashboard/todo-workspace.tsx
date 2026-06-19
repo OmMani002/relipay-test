@@ -33,10 +33,20 @@ export default function TodoWorkspace({
   // Local state for interactive todos list
   const [todos, setTodos] = useState<Todo[]>(initialTodos);
   
-  // Sync state with props from server components
+  // Load from localStorage on mount
   useEffect(() => {
-    setTodos(initialTodos);
-  }, [initialTodos]);
+    const saved = localStorage.getItem(`todos_${user.id}`);
+    if (saved) {
+      try {
+        setTodos(JSON.parse(saved));
+      } catch (e) {
+        console.error('Failed to parse saved todos');
+      }
+    } else {
+      setTodos(initialTodos);
+      localStorage.setItem(`todos_${user.id}`, JSON.stringify(initialTodos));
+    }
+  }, [user.id, initialTodos]);
 
   // Transition state for background server actions
   const [isPending, startTransition] = useTransition();
@@ -75,7 +85,7 @@ export default function TodoWorkspace({
     if (!newTitle.trim() || isCreationLocked) return;
 
     setErrorMsg(null);
-    const title = newTitle;
+    const title = newTitle.trim();
     const priority = newPriority;
     const dueDate = newDueDate;
 
@@ -83,13 +93,41 @@ export default function TodoWorkspace({
     setNewTitle('');
     setNewDueDate('');
 
+    // Update client state & localStorage immediately
+    const tempId = Math.random().toString(36).substring(2, 11);
+    const newTodo: Todo = {
+      id: tempId,
+      userId: user.id,
+      title,
+      completed: false,
+      priority,
+      dueDate: dueDate || undefined,
+      createdAt: new Date().toISOString(),
+    };
+    
+    const updated = [newTodo, ...todos];
+    setTodos(updated);
+    localStorage.setItem(`todos_${user.id}`, JSON.stringify(updated));
+
     startTransition(async () => {
       try {
-        await createTodoAction(title, priority, dueDate || undefined);
+        const result = await createTodoAction(title, priority, dueDate || undefined);
+        // Replace tempId with the real server-generated id
+        if (result && result.id) {
+          setTodos(prev => {
+            const final = prev.map(t => t.id === tempId ? { ...t, id: result.id } : t);
+            localStorage.setItem(`todos_${user.id}`, JSON.stringify(final));
+            return final;
+          });
+        }
       } catch (err: any) {
         setErrorMsg(err.message || 'Failed to add task.');
-        // Restore title if failed
-        setNewTitle(title);
+        // Revert on error
+        setTodos(prev => {
+          const reverted = prev.filter(t => t.id !== tempId);
+          localStorage.setItem(`todos_${user.id}`, JSON.stringify(reverted));
+          return reverted;
+        });
       }
     });
   };
@@ -98,8 +136,10 @@ export default function TodoWorkspace({
   const handleToggleTodo = (id: string) => {
     const originalTodos = [...todos];
     
-    // Optimistic UI Update
-    setTodos(prev => prev.map(t => t.id === id ? { ...t, completed: !t.completed } : t));
+    // Update client state & localStorage immediately
+    const updated = todos.map(t => t.id === id ? { ...t, completed: !t.completed } : t);
+    setTodos(updated);
+    localStorage.setItem(`todos_${user.id}`, JSON.stringify(updated));
 
     startTransition(async () => {
       try {
@@ -108,6 +148,7 @@ export default function TodoWorkspace({
         setErrorMsg('Failed to update task status.');
         // Revert on error
         setTodos(originalTodos);
+        localStorage.setItem(`todos_${user.id}`, JSON.stringify(originalTodos));
       }
     });
   };
@@ -116,8 +157,10 @@ export default function TodoWorkspace({
   const handleDeleteTodo = (id: string) => {
     const originalTodos = [...todos];
 
-    // Optimistic UI Update
-    setTodos(prev => prev.filter(t => t.id !== id));
+    // Update client state & localStorage immediately
+    const updated = todos.filter(t => t.id !== id);
+    setTodos(updated);
+    localStorage.setItem(`todos_${user.id}`, JSON.stringify(updated));
 
     startTransition(async () => {
       try {
@@ -126,6 +169,7 @@ export default function TodoWorkspace({
         setErrorMsg('Failed to delete task.');
         // Revert on error
         setTodos(originalTodos);
+        localStorage.setItem(`todos_${user.id}`, JSON.stringify(originalTodos));
       }
     });
   };
@@ -149,13 +193,15 @@ export default function TodoWorkspace({
 
     const originalTodos = [...todos];
 
-    // Optimistic UI Update
-    setTodos(prev => prev.map(t => t.id === id ? { 
+    // Update client state & localStorage immediately
+    const updated = todos.map(t => t.id === id ? { 
       ...t, 
       title: editTitle.trim(), 
       priority: editPriority, 
       dueDate: editDueDate || undefined 
-    } : t));
+    } : t);
+    setTodos(updated);
+    localStorage.setItem(`todos_${user.id}`, JSON.stringify(updated));
 
     setEditingId(null);
 
@@ -165,6 +211,7 @@ export default function TodoWorkspace({
       } catch (err: any) {
         setErrorMsg('Failed to save task modifications.');
         setTodos(originalTodos);
+        localStorage.setItem(`todos_${user.id}`, JSON.stringify(originalTodos));
       }
     });
   };

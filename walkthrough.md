@@ -21,6 +21,7 @@ These redirects completely prevent access to the landing page and authentication
 ### Bug Fixes
 - **[db.ts (getUserPlan)](file:///d:/Relipay%20Test/relipay-test/lib/db.ts)**: Added a check `accessToken !== 'mock-access-token'` before attempting to query the remote ReliPay subscription API. This prevents `RelipayError` crashes caused by passing the dummy mock token to the real SDK client.
 - **[db.ts (In-memory Fallback)](file:///d:/Relipay%20Test/relipay-test/lib/db.ts)**: Implemented global in-memory database arrays for tasks and subscriptions. If file writing fails (due to Vercel's read-only serverless filesystem / `EROFS`), the app seamlessly falls back to keeping the data in memory. This prevents `Database write failure` actions errors in production.
+- **[todo-workspace.tsx (Client Persistence)](file:///d:/Relipay%20Test/relipay-test/app/dashboard/todo-workspace.tsx)**: Synchronized all task state modifications (add, toggle, delete, edit) immediately with the browser's `localStorage`. This guarantees persistent, zero-latency state changes for the user's browser, preventing tasks from reappearing/disappearing due to stateless serverless container restarts on Vercel.
 
 ### Dashboard Header Clean-up
 - **[page.tsx (Dashboard)](file:///d:/Relipay%20Test/relipay-test/app/dashboard/page.tsx)**: Commented out the unused `logoutAction` import, and removed the user email label and "Log Out" button form from the navigation header.
