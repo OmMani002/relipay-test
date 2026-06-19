@@ -1,4 +1,4 @@
-import { auth } from '@relipay/nextjs/server';
+import { auth } from '@/lib/auth';
 import { redirect } from 'next/navigation';
 // import { logoutAction } from '../actions';
 import { getTodos, getUserPlan } from '../../../lib/db';

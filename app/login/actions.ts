@@ -1,6 +1,6 @@
 'use server';
 
-import { signIn } from '@relipay/nextjs/server';
+import { signIn } from '@/lib/auth';
 import { redirect } from 'next/navigation';
 
 export async function loginAction(prevState: any, formData: FormData) {

@@ -1,6 +1,6 @@
 'use server';
 
-import { auth } from '@relipay/nextjs/server';
+import { auth } from '@/lib/auth';
 import { revalidatePath } from 'next/cache';
 import { addTodo, toggleTodo, deleteTodo, editTodo, getUserPlan, getTodos, countTasksCreatedThisMonth } from '../../lib/db';
 

@@ -11,6 +11,10 @@ We have successfully bypassed the authentication UI pages, auto-logged users dir
 
 These redirects completely prevent access to the landing page and authentication input forms.
 
+### SDK Integration / Server Helpers
+- **[auth.ts (New Wrapper)](file:///d:/Relipay%20Test/relipay-test/lib/auth.ts)**: Created a local mock auth library file that exports `auth()`, `signIn()`, `signUp()`, and `signOut()`. This ensures that all mock session logic is fully tracked in Git and successfully runs in production (on Vercel) instead of relying on local modifications to `node_modules`.
+- **Application Files**: Replaced imports of `@relipay/nextjs/server` with `@/lib/auth` across all pages and server action files.
+
 - **TypeScript & Turbopack Compilation Fix**: Commented out the unused imports (`Link`, `auth`, `useActionState`, etc.) and cleaned up the legacy JSX rendering code in `app/page.tsx`, `app/login/page.tsx`, and `app/register/page.tsx`. Specifically, the JSX comments `{/* ... */}` were completely removed from `app/page.tsx` to prevent Turbopack parser crashes caused by premature block-comment termination (`*/`). This resolves the TypeScript build compilation error and Turbopack expression parsing issues.
 
 ### Bug Fixes

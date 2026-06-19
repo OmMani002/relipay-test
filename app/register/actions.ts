@@ -1,6 +1,6 @@
 'use server';
 
-import { signUp } from '@relipay/nextjs/server';
+import { signUp } from '@/lib/auth';
 import { redirect } from 'next/navigation';
 
 export async function registerAction(prevState: any, formData: FormData) {
