@@ -4,6 +4,14 @@ import { useActionState } from 'react';
 import Link from 'next/link';
 import { loginAction } from './actions';
 
+import { redirect } from 'next/navigation';
+
+export default function LoginPage() {
+  redirect('/dashboard');
+  return null;
+}
+
+/*
 export default function LoginPage() {
   const [state, formAction, isPending] = useActionState(loginAction, null);
 
@@ -88,3 +96,4 @@ export default function LoginPage() {
     </main>
   );
 }
+*/

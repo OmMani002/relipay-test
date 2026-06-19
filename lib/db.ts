@@ -194,7 +194,7 @@ export async function saveMockSubscription(
 // Retrieve the user's active tier (remote ReliPay takes priority, local mock falls back)
 export async function getUserPlan(userId: string, accessToken?: string): Promise<UserPlanInfo> {
   // 1. Try querying remote ReliPay server if user has an access token
-  if (accessToken) {
+  if (accessToken && accessToken !== 'mock-access-token') {
     try {
       const activeSub = await relipay.billing.getSubscription(accessToken);
       if (activeSub && activeSub.status === 'ACTIVE') {

@@ -1,6 +1,6 @@
 import { auth } from '@relipay/nextjs/server';
 import { redirect } from 'next/navigation';
-import { logoutAction } from './actions';
+// import { logoutAction } from './actions';
 import { getTodos, getUserPlan, countTasksCreatedThisMonth } from '../../lib/db';
 import TodoWorkspace from './todo-workspace';
 import Link from 'next/link';
@@ -32,16 +32,6 @@ export default async function DashboardPage() {
           </svg>
           ReliPay Portal
         </Link>
-        <div className="flex items-center gap-4">
-          <span className="hidden md:inline-block text-xs font-mono text-zinc-400 max-w-[200px] truncate">
-            {user.email}
-          </span>
-          <form action={logoutAction}>
-            <button type="submit" className="btn-secondary py-1.5 px-4 text-xs font-semibold">
-              Log Out
-            </button>
-          </form>
-        </div>
       </header>
 
       {/* Main Dashboard Section */}

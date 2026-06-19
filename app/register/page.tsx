@@ -4,6 +4,14 @@ import { useActionState } from 'react';
 import Link from 'next/link';
 import { registerAction } from './actions';
 
+import { redirect } from 'next/navigation';
+
+export default function RegisterPage() {
+  redirect('/dashboard');
+  return null;
+}
+
+/*
 export default function RegisterPage() {
   const [state, formAction, isPending] = useActionState(registerAction, null);
 
@@ -88,3 +96,4 @@ export default function RegisterPage() {
     </main>
   );
 }
+*/
