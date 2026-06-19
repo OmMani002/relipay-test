@@ -11,6 +11,8 @@ We have successfully bypassed the authentication UI pages, auto-logged users dir
 
 These redirects completely prevent access to the landing page and authentication input forms.
 
+- **TypeScript Compilation Fix**: Commented out the unused imports (`Link`, `auth`, `useActionState`, etc.) and the unreachable JSX in `app/page.tsx`, `app/login/page.tsx`, and `app/register/page.tsx`. This resolves the TypeScript `'session' is possibly 'null'` build compilation error when running `next build`.
+
 ### Bug Fixes
 - **[db.ts (getUserPlan)](file:///d:/Relipay%20Test/relipay-test/lib/db.ts)**: Added a check `accessToken !== 'mock-access-token'` before attempting to query the remote ReliPay subscription API. This prevents `RelipayError` crashes caused by passing the dummy mock token to the real SDK client.
 

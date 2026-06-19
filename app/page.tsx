@@ -1,7 +1,13 @@
-import Link from "next/link";
-import { auth } from "@relipay/nextjs/server";
+// import Link from "next/link";
+// import { auth } from "@relipay/nextjs/server";
 import { redirect } from "next/navigation";
 
+export default async function Home() {
+  redirect('/dashboard');
+  return null;
+}
+
+/*
 export default async function Home() {
   redirect('/dashboard');
   const session = await auth();
@@ -88,3 +94,4 @@ export default async function Home() {
     </main>
   );
 }
+*/

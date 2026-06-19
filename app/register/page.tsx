@@ -1,8 +1,8 @@
 'use client';
 
-import { useActionState } from 'react';
-import Link from 'next/link';
-import { registerAction } from './actions';
+// import { useActionState } from 'react';
+// import Link from 'next/link';
+// import { registerAction } from './actions';
 
 import { redirect } from 'next/navigation';
 
