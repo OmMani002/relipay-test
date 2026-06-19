@@ -15,5 +15,13 @@
     "completed": true,
     "priority": "medium",
     "createdAt": "2026-06-16T06:55:38.733Z"
+  },
+  {
+    "id": "v3ytr19qd",
+    "userId": "mock-user-id",
+    "title": "first task",
+    "completed": false,
+    "priority": "medium",
+    "createdAt": "2026-06-19T04:36:37.768Z"
   }
 ]

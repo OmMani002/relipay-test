@@ -28,57 +28,83 @@ export interface UserPlanInfo {
 const DB_FILE_PATH = path.join(process.cwd(), 'data', 'todos.json');
 const SUB_FILE_PATH = path.join(process.cwd(), 'data', 'subscriptions.json');
 
+// Global in-memory storage fallbacks for read-only environments (like Vercel production)
+let inMemoryTodos: Todo[] | null = null;
+let inMemorySubs: MockSubscription[] | null = null;
+
 // Helper to read all todos from the JSON file
 async function readTodosFile(): Promise<Todo[]> {
+  if (inMemoryTodos !== null) {
+    return inMemoryTodos;
+  }
   try {
     const data = await fs.readFile(DB_FILE_PATH, 'utf-8');
-    return JSON.parse(data) as Todo[];
+    const todos = JSON.parse(data) as Todo[];
+    inMemoryTodos = todos;
+    return todos;
   } catch (error: any) {
     if (error.code === 'ENOENT') {
-      await fs.writeFile(DB_FILE_PATH, '[]');
+      try {
+        await fs.writeFile(DB_FILE_PATH, '[]');
+      } catch (e) {
+        console.warn('Failed to write default todos database file, using in-memory store.');
+      }
+      inMemoryTodos = [];
       return [];
     }
     console.error('Error reading todos database file:', error);
+    inMemoryTodos = [];
     return [];
   }
 }
 
 // Helper to write all todos to the JSON file
 async function writeTodosFile(todos: Todo[]): Promise<void> {
+  inMemoryTodos = todos;
   try {
     const tempPath = `${DB_FILE_PATH}.tmp`;
     await fs.writeFile(tempPath, JSON.stringify(todos, null, 2), 'utf-8');
     await fs.rename(tempPath, DB_FILE_PATH);
   } catch (error) {
-    console.error('Error writing to todos database file:', error);
-    throw new Error('Database write failure');
+    console.warn('Failed to write to todos database file (Read-Only FS?), using in-memory store instead.');
   }
 }
 
 // Helper to read subscriptions
 async function readSubscriptionsFile(): Promise<MockSubscription[]> {
+  if (inMemorySubs !== null) {
+    return inMemorySubs;
+  }
   try {
     const data = await fs.readFile(SUB_FILE_PATH, 'utf-8');
-    return JSON.parse(data) as MockSubscription[];
+    const subs = JSON.parse(data) as MockSubscription[];
+    inMemorySubs = subs;
+    return subs;
   } catch (error: any) {
     if (error.code === 'ENOENT') {
-      await fs.writeFile(SUB_FILE_PATH, '[]');
+      try {
+        await fs.writeFile(SUB_FILE_PATH, '[]');
+      } catch (e) {
+        console.warn('Failed to write default subscriptions database file, using in-memory store.');
+      }
+      inMemorySubs = [];
       return [];
     }
     console.error('Error reading subscriptions database file:', error);
+    inMemorySubs = [];
     return [];
   }
 }
 
 // Helper to write subscriptions
 async function writeSubscriptionsFile(subs: MockSubscription[]): Promise<void> {
+  inMemorySubs = subs;
   try {
     const tempPath = `${SUB_FILE_PATH}.tmp`;
     await fs.writeFile(tempPath, JSON.stringify(subs, null, 2), 'utf-8');
     await fs.rename(tempPath, SUB_FILE_PATH);
   } catch (error) {
-    console.error('Error writing to subscriptions database file:', error);
-    throw new Error('Database write failure');
+    console.warn('Failed to write to subscriptions database file (Read-Only FS?), using in-memory store instead.');
   }
 }
 
