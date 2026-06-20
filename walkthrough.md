@@ -1,39 +1,53 @@
-# Walkthrough - Remove Authentication UI and Logout Buttons
+# Walkthrough - Restore ReliPay Authentication & UI
 
-We have successfully bypassed the authentication UI pages, auto-logged users directly into `/dashboard`, and removed all logout actions/buttons across the application.
+We have successfully restored the official ReliPay authentication integration, route gating middleware, and interactive login/registration interfaces.
 
 ## Changes Made
 
-### Auto-Redirections & Routing
-- **`/` (Home)**: Added an immediate `redirect('/dashboard')` inside the `Home` component of [page.tsx](file:///d:/Relipay%20Test/relipay-test/app/page.tsx).
-- **`/login`**: Added an immediate `redirect('/dashboard')` inside [page.tsx](file:///d:/Relipay%20Test/relipay-test/app/login/page.tsx).
-- **`/register`**: Added an immediate `redirect('/dashboard')` inside [page.tsx](file:///d:/Relipay%20Test/relipay-test/app/register/page.tsx).
+### 1. Middleware & Routing Route Protection
+- **[middleware.ts](file:///d:/Relipay%20Test/relipay-test/middleware.ts)**: Re-enabled `relipayMiddleware` route gating. Unauthenticated access to `/dashboard` now redirects users to `/login`. `/`, `/login`, and `/register` are accessible publicly.
 
-These redirects completely prevent access to the landing page and authentication input forms.
+### 2. Welcome Homepage
+- **[app/page.tsx](file:///d:/Relipay%20Test/relipay-test/app/page.tsx)**: Replaced the automatic dashboard redirect with a beautiful Welcome screen featuring a radial gradient background.
+  - If a user session is active, it offers a button to **Go to Dashboard**.
+  - If signed out, it displays **Sign In** and **Create Account** action buttons.
 
-### SDK Integration / Server Helpers
-- **[auth.ts (New Wrapper)](file:///d:/Relipay%20Test/relipay-test/lib/auth.ts)**: Created a local mock auth library file that exports `auth()`, `signIn()`, `signUp()`, and `signOut()`. This ensures that all mock session logic is fully tracked in Git and successfully runs in production (on Vercel) instead of relying on local modifications to `node_modules`.
-- **Application Files**: Replaced imports of `@relipay/nextjs/server` with `@/lib/auth` across all pages and server action files.
+### 3. Login Flow
+- **[app/login/actions.ts](file:///d:/Relipay%20Test/relipay-test/app/login/actions.ts)**: Implemented the server action using `signIn` from `@relipay/nextjs/server` to handle logins and set secure HttpOnly session cookies.
+- **[app/login/page.tsx](file:///d:/Relipay%20Test/relipay-test/app/login/page.tsx)**: Created a premium card interface using React 19's `useActionState` to present credentials fields, a pending submission spinner, and catch errors.
 
-- **TypeScript & Turbopack Compilation Fix**: Commented out the unused imports (`Link`, `auth`, `useActionState`, etc.) and cleaned up the legacy JSX rendering code in `app/page.tsx`, `app/login/page.tsx`, and `app/register/page.tsx`. Specifically, the JSX comments `{/* ... */}` were completely removed from `app/page.tsx` to prevent Turbopack parser crashes caused by premature block-comment termination (`*/`). 
-- **Legacy Actions Clean-up**: Emptied unused server action files (`app/login/actions.ts`, `app/register/actions.ts`, and `app/dashboard/actions.ts`) to resolve TypeScript build errors. These files are no longer imported anywhere and can be safely deleted manually from the project directory.
+### 4. Registration Flow
+- **[app/register/actions.ts](file:///d:/Relipay%20Test/relipay-test/app/register/actions.ts)**: Implemented the server action using `signUp` from `@relipay/nextjs/server` to register a new user and login.
+- **[app/register/page.tsx](file:///d:/Relipay%20Test/relipay-test/app/register/page.tsx)**: Created a matching signup card interface connecting to the registration action.
 
-### Bug Fixes
-- **[db.ts (getUserPlan)](file:///d:/Relipay%20Test/relipay-test/lib/db.ts)**: Added a check `accessToken !== 'mock-access-token'` before attempting to query the remote ReliPay subscription API. This prevents `RelipayError` crashes caused by passing the dummy mock token to the real SDK client.
-- **[db.ts (In-memory Fallback)](file:///d:/Relipay%20Test/relipay-test/lib/db.ts)**: Implemented global in-memory database arrays for tasks and subscriptions. If file writing fails (due to Vercel's read-only serverless filesystem / `EROFS`), the app seamlessly falls back to keeping the data in memory. This prevents `Database write failure` actions errors in production.
-- **[todo-workspace.tsx (Client Persistence)](file:///d:/Relipay%20Test/relipay-test/app/dashboard/todo-workspace.tsx)**: Synchronized all task state modifications (add, toggle, delete, edit) immediately with the browser's `localStorage`. This guarantees persistent, zero-latency state changes for the user's browser, preventing tasks from reappearing/disappearing due to stateless serverless container restarts on Vercel.
+### 5. Sign Out
+- **[app/dashboard/actions.ts](file:///d:/Relipay%20Test/relipay-test/app/dashboard/actions.ts)**: Created a new server action exporting `logoutAction` that invokes the SDK `signOut("/login")` helper.
 
-### Dashboard Header Clean-up
-- **[page.tsx (Dashboard)](file:///d:/Relipay%20Test/relipay-test/app/dashboard/page.tsx)**: Commented out the unused `logoutAction` import, and removed the user email label and "Log Out" button form from the navigation header.
-- **[page.tsx (Billing)](file:///d:/Relipay%20Test/relipay-test/app/dashboard/billing/page.tsx)**: Commented out the unused `logoutAction` import, and removed the user email label and "Log Out" button form from the billing page header.
+### 6. UI Navigation Updates
+- **[app/dashboard/page.tsx](file:///d:/Relipay%20Test/relipay-test/app/dashboard/page.tsx)**: Changed imports to use `@relipay/nextjs/server` and added back the user email display and the **Log Out** button to the navigation header.
+- **[app/dashboard/billing/page.tsx](file:///d:/Relipay%20Test/relipay-test/app/dashboard/billing/page.tsx)**: Restored the user email display and the **Log Out** button in the billing navigation header.
+
+### 7. Actions Import Clean-up
+- **[app/dashboard/todo-actions.ts](file:///d:/Relipay%20Test/relipay-test/app/dashboard/todo-actions.ts)**: Replaced mock helper imports with `@relipay/nextjs/server`.
+- **[app/dashboard/billing/actions.ts](file:///d:/Relipay%20Test/relipay-test/app/dashboard/billing/actions.ts)**: Replaced mock helper imports with `@relipay/nextjs/server`.
+
+### 8. SDK Code Restoration inside node_modules
+- **[server.js (SDK)](file:///d:/Relipay%20Test/relipay-test/node_modules/@relipay/nextjs/dist/server.js)**: Uncommented the server-side SDK implementations of `auth`, `signIn`, `signUp`, and `signOut` and removed the hardcoded mock returns. This allows the SDK to correctly store encrypted session cookies (`relipay_access` and `relipay_refresh`) in the browser. Without this, the middleware was unable to detect any login session and continuously redirected the browser back to `/login`.
 
 ---
 
-## Verification Instructions
+## Verification Plan
 
-1. Compile the project to confirm there are no typescript/compilation issues:
-   ```powershell
-   npm run build
-   ```
-2. Navigate to `http://localhost:3000/` or manual routes like `/login` or `/register` inside your browser. You will be instantly redirected to `/dashboard` directly, without seeing any auth interfaces.
-3. Check the top-right header on `/dashboard` and `/dashboard/billing` — the Log Out button and the logged-in email label are now completely removed.
+### Build Check
+To confirm everything compiles correctly with TypeScript and Next.js, run:
+```powershell
+npm run build
+```
+
+### Manual Acceptance Flow
+1. Navigate to `http://localhost:3000/`. Verify you see the Welcome Page.
+2. If already logged in, click **Go to Dashboard**, then click **Log Out** in the navigation header. You should be redirected back to the login page `/login`.
+3. Try to manually visit `/dashboard` when signed out. Verify you are automatically redirected back to `/login` by the middleware.
+4. From `/login`, click the **Register here** link to go to `/register`.
+5. Enter a new email address and password to register a new account.
+6. Verify you are successfully registered, logged in, and redirected back to `/dashboard` with your email visible in the top right header.

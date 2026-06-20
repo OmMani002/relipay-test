@@ -1,7 +1,13 @@
-# Tasks: Remove Authentication UI
+# Tasks: Restore ReliPay Authentication
 
-- [x] Auto-redirect `/` to `/dashboard` in `app/page.tsx`
-- [x] Auto-redirect `/login` and `/register` to `/dashboard`
-- [x] Remove logout form and user email display from dashboard header in `app/dashboard/page.tsx`
-- [x] Remove logout form and user email display from billing header in `app/dashboard/billing/page.tsx`
-- [x] Verify everything compiles cleanly (Ready for User to verify)
+- [x] Re-enable route protection in `middleware.ts`
+- [x] Restore homepage (`app/page.tsx`) welcome UI and session checks
+- [x] Implement `app/login/actions.ts` and `app/login/page.tsx`
+- [x] Implement `app/register/actions.ts` and `app/register/page.tsx`
+- [x] Implement `app/dashboard/actions.ts` for logout support
+- [x] Restore user email and logout button in `app/dashboard/page.tsx`
+- [x] Restore user email and logout button in `app/dashboard/billing/page.tsx`
+- [x] Update imports to `@relipay/nextjs/server` in:
+  - `app/dashboard/todo-actions.ts`
+  - `app/dashboard/billing/actions.ts`
+- [x] Verify everything compiles cleanly

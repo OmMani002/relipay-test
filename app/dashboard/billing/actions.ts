@@ -1,6 +1,6 @@
 'use server';
 
-import { auth } from '@/lib/auth';
+import { auth } from '@relipay/nextjs/server';
 import { revalidatePath } from 'next/cache';
 import { relipay } from '../../../lib/relipay';
 import { saveMockSubscription } from '../../../lib/db';
