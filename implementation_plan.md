@@ -50,11 +50,17 @@ We will restore route-gating via Next.js Middleware, create standard login and r
 #### [MODIFY] [page.tsx](file:///d:/Relipay%20Test/relipay-test/app/dashboard/billing/page.tsx)
 - Change the `auth` import from `@/lib/auth` to `@relipay/nextjs/server`.
 - Restore the navigation header containing the user's email address and the "Log Out" button.
-
-#### [MODIFY] [todo-actions.ts](file:///d:/Relipay%20Test/relipay-test/app/dashboard/todo-actions.ts)
-- Update the `auth` import statement to target `@relipay/nextjs/server`.
+- Query active billing providers using `relipay.billing.getProviders()` and pass them to the client.
 
 #### [MODIFY] [actions.ts](file:///d:/Relipay%20Test/relipay-test/app/dashboard/billing/actions.ts)
+- Update `createCheckoutAction` to accept a `provider` parameter ('stripe' | 'paypal' | 'razorpay') and pass it to the SDK's `createCheckout` method.
+- Update the `auth` import statement to target `@relipay/nextjs/server`.
+
+#### [MODIFY] [billing-client.tsx](file:///d:/Relipay%20Test/relipay-test/app/dashboard/billing/billing-client.tsx)
+- Accept `providers` list from parent component.
+- Dynamically render checkout buttons for "Pay with Stripe" and "Pay with PayPal" depending on active application configurations, styling them nicely to fit brand aesthetics.
+
+#### [MODIFY] [todo-actions.ts](file:///d:/Relipay%20Test/relipay-test/app/dashboard/todo-actions.ts)
 - Update the `auth` import statement to target `@relipay/nextjs/server`.
 
 ---
@@ -68,9 +74,7 @@ We will restore route-gating via Next.js Middleware, create standard login and r
   ```
 
 ### Manual Verification
-1. Access `/` (root route) while signed out. Ensure the welcome screen is visible.
-2. Click **Create Account** to navigate to `/register`. Register a new user account.
-3. Once registered, ensure you are automatically logged in and redirected to `/dashboard`.
-4. Check that your email is displayed in the dashboard header and a **Log Out** button is present.
-5. Click **Log Out** to confirm the session is cleared and you are redirected back to the login page.
-6. Attempt to visit `/dashboard` directly while signed out; ensure you are redirected to `/login`.
+1. Open `/dashboard/billing`.
+2. Check that pricing cards now list **Pay with Stripe** and **Pay with PayPal** options under the active plans.
+3. Click **Pay with Stripe**; verify you are redirected to the Stripe Checkout portal on the ReliPay server.
+4. Go back and click **Pay with PayPal**; verify you are redirected to the PayPal checkout flow.

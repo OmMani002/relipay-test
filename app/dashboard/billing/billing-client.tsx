@@ -19,6 +19,7 @@ interface Plan {
 
 interface BillingClientProps {
   plans: Plan[];
+  providers: any[];
   currentPlan: {
     tier: 'free' | 'monthly' | 'yearly';
     isMock: boolean;
@@ -30,6 +31,7 @@ interface BillingClientProps {
 
 export default function BillingClient({ 
   plans, 
+  providers,
   currentPlan, 
   totalTodosCount, 
   status 
@@ -42,11 +44,11 @@ export default function BillingClient({
   const yearlyPlan = plans.find(p => p.interval === 'YEAR' || p.slug.toLowerCase().includes('yearly'));
 
   // Trigger real checkout redirect
-  const handleRealCheckout = (planSlug: string) => {
+  const handleRealCheckout = (planSlug: string, provider?: 'stripe' | 'paypal' | 'razorpay') => {
     setErrorMsg(null);
     startTransition(async () => {
       try {
-        const result = await createCheckoutAction(planSlug);
+        const result = await createCheckoutAction(planSlug, provider);
         if (result.url) {
           window.location.href = result.url; // Redirect to hosted billing portal
         }
@@ -55,6 +57,10 @@ export default function BillingClient({
       }
     });
   };
+
+  // Determine enabled providers
+  const hasStripe = providers.length === 0 || providers.some(p => p.provider === 'stripe');
+  const hasPaypal = providers.length === 0 || providers.some(p => p.provider === 'paypal');
 
   // Trigger local mock subscription bypass
   const handleMockUpgrade = (tier: 'monthly' | 'yearly') => {
@@ -308,14 +314,26 @@ export default function BillingClient({
               </button>
             ) : (
               <>
-                <button
-                  disabled={isPending}
-                  onClick={() => handleRealCheckout(monthlyPlan?.slug || '100_inr_monthly')}
-                  className="w-full btn-primary py-2 px-4 text-xs flex items-center justify-center gap-1.5"
-                >
-                  {isPending && <span className="w-3.5 h-3.5 border-2 border-white/30 border-t-white rounded-full animate-spin"></span>}
-                  Subscribe (ReliPay Portal)
-                </button>
+                {hasStripe && (
+                  <button
+                    disabled={isPending}
+                    onClick={() => handleRealCheckout(monthlyPlan?.slug || '100_inr_monthly', 'stripe')}
+                    className="w-full btn-primary py-2 px-4 text-xs flex items-center justify-center gap-2 bg-gradient-to-r from-indigo-500 to-indigo-600 hover:from-indigo-600 hover:to-indigo-700 shadow-sm"
+                  >
+                    {isPending && <span className="w-3.5 h-3.5 border-2 border-white/30 border-t-white rounded-full animate-spin"></span>}
+                    Pay with Stripe
+                  </button>
+                )}
+                {hasPaypal && (
+                  <button
+                    disabled={isPending}
+                    onClick={() => handleRealCheckout(monthlyPlan?.slug || '100_inr_monthly', 'paypal')}
+                    className="w-full py-2 px-4 text-xs font-bold rounded-xl flex items-center justify-center gap-2 bg-[#ffc439] text-[#003087] hover:bg-[#ebd255] transition-all shadow-sm border border-transparent"
+                  >
+                    {isPending && <span className="w-3.5 h-3.5 border-2 border-blue-900/30 border-t-blue-900 rounded-full animate-spin"></span>}
+                    Pay with PayPal
+                  </button>
+                )}
                 <button
                   disabled={isPending}
                   onClick={() => handleMockUpgrade('monthly')}
@@ -382,14 +400,26 @@ export default function BillingClient({
               </button>
             ) : (
               <>
-                <button
-                  disabled={isPending}
-                  onClick={() => handleRealCheckout(yearlyPlan?.slug || '800_inr_yearly')}
-                  className="w-full btn-primary py-2 px-4 text-xs flex items-center justify-center gap-1.5"
-                >
-                  {isPending && <span className="w-3.5 h-3.5 border-2 border-white/30 border-t-white rounded-full animate-spin"></span>}
-                  Subscribe (ReliPay Portal)
-                </button>
+                {hasStripe && (
+                  <button
+                    disabled={isPending}
+                    onClick={() => handleRealCheckout(yearlyPlan?.slug || '800_inr_yearly', 'stripe')}
+                    className="w-full btn-primary py-2 px-4 text-xs flex items-center justify-center gap-2 bg-gradient-to-r from-indigo-500 to-indigo-600 hover:from-indigo-600 hover:to-indigo-700 shadow-sm"
+                  >
+                    {isPending && <span className="w-3.5 h-3.5 border-2 border-white/30 border-t-white rounded-full animate-spin"></span>}
+                    Pay with Stripe
+                  </button>
+                )}
+                {hasPaypal && (
+                  <button
+                    disabled={isPending}
+                    onClick={() => handleRealCheckout(yearlyPlan?.slug || '800_inr_yearly', 'paypal')}
+                    className="w-full py-2 px-4 text-xs font-bold rounded-xl flex items-center justify-center gap-2 bg-[#ffc439] text-[#003087] hover:bg-[#ebd255] transition-all shadow-sm border border-transparent"
+                  >
+                    {isPending && <span className="w-3.5 h-3.5 border-2 border-blue-900/30 border-t-blue-900 rounded-full animate-spin"></span>}
+                    Pay with PayPal
+                  </button>
+                )}
                 <button
                   disabled={isPending}
                   onClick={() => handleMockUpgrade('yearly')}

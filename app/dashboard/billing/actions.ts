@@ -6,7 +6,7 @@ import { relipay } from '../../../lib/relipay';
 import { saveMockSubscription } from '../../../lib/db';
 
 // Create a real checkout session using the ReliPay SDK
-export async function createCheckoutAction(planSlug: string) {
+export async function createCheckoutAction(planSlug: string, provider?: 'stripe' | 'paypal' | 'razorpay') {
   const session = await auth();
   if (!session) {
     throw new Error('Unauthorized: You must be signed in to access billing checkout.');
@@ -21,6 +21,7 @@ export async function createCheckoutAction(planSlug: string) {
       planSlug,
       successUrl,
       cancelUrl,
+      provider,
     });
     
     return { url: outcome.url };

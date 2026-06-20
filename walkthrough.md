@@ -34,6 +34,11 @@ We have successfully restored the official ReliPay authentication integration, r
 ### 8. SDK Code Restoration inside node_modules
 - **[server.js (SDK)](file:///d:/Relipay%20Test/relipay-test/node_modules/@relipay/nextjs/dist/server.js)**: Uncommented the server-side SDK implementations of `auth`, `signIn`, `signUp`, and `signOut` and removed the hardcoded mock returns. This allows the SDK to correctly store encrypted session cookies (`relipay_access` and `relipay_refresh`) in the browser. Without this, the middleware was unable to detect any login session and continuously redirected the browser back to `/login`.
 
+### 9. Stripe & PayPal Billing Integration
+- **[actions.ts (Billing)](file:///d:/Relipay%20Test/relipay-test/app/dashboard/billing/actions.ts)**: Enhanced `createCheckoutAction` to accept a chosen payment gateway provider (`stripe` or `paypal`) and forward it to the SDK checkout creator.
+- **[page.tsx (Billing)](file:///d:/Relipay%20Test/relipay-test/app/dashboard/billing/page.tsx)**: Injected a call to the SDK's `getProviders()` method to retrieve the application's active billing providers, passing the array dynamically to the client-side pricing component.
+- **[billing-client.tsx](file:///d:/Relipay%20Test/relipay-test/app/dashboard/billing/billing-client.tsx)**: Updated the pricing client component to read the active payment providers array and render dedicated premium styling checkout buttons (**Pay with Stripe** and **Pay with PayPal**) instead of a generic checkout button.
+
 ---
 
 ## Verification Plan

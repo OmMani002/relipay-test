@@ -11,3 +11,9 @@
   - `app/dashboard/todo-actions.ts`
   - `app/dashboard/billing/actions.ts`
 - [x] Verify everything compiles cleanly
+
+## Stripe & PayPal Billing Tasks
+- [x] Update `createCheckoutAction` in `app/dashboard/billing/actions.ts` to support provider argument
+- [x] Fetch providers using `getProviders()` in `app/dashboard/billing/page.tsx`
+- [x] Update `billing-client.tsx` to render Stripe and PayPal buttons
+- [x] Verify build compiles cleanly

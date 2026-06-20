@@ -38,6 +38,15 @@ export default async function BillingPage({ searchParams }: BillingPageProps) {
     ];
   }
 
+  // Fetch active billing providers from the SDK
+  let providers: any[] = [];
+  try {
+    const providersResponse = await relipay.billing.getProviders();
+    providers = providersResponse.providers || [];
+  } catch (error) {
+    console.error('Could not fetch billing providers from ReliPay server:', error);
+  }
+
   // 2. Resolve active tier (either remote subscription or local sandbox mock)
   const currentPlan = await getUserPlan(user.id, session.accessToken);
   const todos = await getTodos(user.id);
@@ -96,6 +105,7 @@ export default async function BillingPage({ searchParams }: BillingPageProps) {
         {/* Client-side pricing workspace */}
         <BillingClient 
           plans={plans} 
+          providers={providers}
           currentPlan={currentPlan} 
           totalTodosCount={totalTodosCount} 
           status={status}
