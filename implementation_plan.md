@@ -1,80 +1,55 @@
-# Restore ReliPay Authentication & UI
+# Add Name Field to User Registration
 
-This plan outlines the steps required to restore the authentication layers using the `@relipay/nextjs` SDK in our Next.js application, reversing the bypass changes and restoring the login/register flows.
+This plan outlines the changes needed to collect a user's name during registration, save it via the ReliPay `signUp` API's metadata parameter, and display the name in the dashboard UI and workspace profile card.
 
 ## Proposed Changes
 
-We will restore route-gating via Next.js Middleware, create standard login and registration pages with server actions, restore user identity visual elements, and wire up the logout buttons.
+### Registration Flow
 
----
+#### [MODIFY] [actions.ts](file:///d:/Relipay%20Test/relipay-test/app/register/actions.ts)
+- Retrieve the `name` field from the registration `formData`.
+- Validate that `name` is provided.
+- Pass `metadata: { name }` in the call to `signUp({ email, password, metadata: { name } })`.
 
-### Middleware & Routing
+#### [MODIFY] [page.tsx](file:///d:/Relipay%20Test/relipay-test/app/register/page.tsx)
+- Add a new input field for "Full Name" (under a `form-group` styled container) above the email input field.
+- Set name to `name`, placeholder to `"John Doe"`, and make it `required`.
 
-#### [MODIFY] [middleware.ts](file:///d:/Relipay%20Test/relipay-test/middleware.ts)
-- Uncomment the `relipayMiddleware` configuration to protect `/dashboard` and make `/`, `/login`, and `/register` public.
-- Remove the temporary bypass middleware.
+### Mock Authentication
 
-#### [MODIFY] [page.tsx](file:///d:/Relipay%20Test/relipay-test/app/page.tsx)
-- Rebuild the landing/welcome page UI with premium styling.
-- Check session status using `auth()` from `@relipay/nextjs/server`. If signed in, show a "Go to Dashboard" button; otherwise, show "Sign In" and "Create Account" buttons.
+#### [MODIFY] [auth.ts](file:///d:/Relipay%20Test/relipay-test/lib/auth.ts)
+- Update the mock `signUp` function to support the optional `metadata` parameter.
+- Update the mock session in `auth` to return a fallback `metadata: { name: 'Guest User' }` for development/mock testing.
+- Update `Session` user interface type to include `metadata?: Record<string, any> | null`.
 
----
-
-### Authentication Pages & Actions
-
-#### [NEW] [actions.ts](file:///d:/Relipay%20Test/relipay-test/app/login/actions.ts)
-- Create a server action to handle user log-ins by calling `signIn` from `@relipay/nextjs/server`.
-- Handle success by redirecting to `/dashboard`, and return errors dynamically to the login form.
-
-#### [NEW] [page.tsx](file:///d:/Relipay%20Test/relipay-test/app/login/page.tsx)
-- Build a glassmorphic login card UI that integrates with `loginAction` using React 19's `useActionState` for handling loading and error states.
-
-#### [NEW] [actions.ts](file:///d:/Relipay%20Test/relipay-test/app/register/actions.ts)
-- Create a server action to handle user registration by calling `signUp` from `@relipay/nextjs/server`.
-- Automatically redirect to `/dashboard` on success and capture potential registration errors.
-
-#### [NEW] [page.tsx](file:///d:/Relipay%20Test/relipay-test/app/register/page.tsx)
-- Build a registration card UI matching the login style, connecting to `registerAction`.
-
----
-
-### Dashboard, Billing & Layout Updates
-
-#### [NEW] [actions.ts](file:///d:/Relipay%20Test/relipay-test/app/dashboard/actions.ts)
-- Add a new server action containing `logoutAction` using `signOut` from `@relipay/nextjs/server`.
+### Dashboard UI
 
 #### [MODIFY] [page.tsx](file:///d:/Relipay%20Test/relipay-test/app/dashboard/page.tsx)
-- Change the `auth` import from `@/lib/auth` to `@relipay/nextjs/server`.
-- Restore the navigation header containing the user's email address and the "Log Out" form action.
+- Update the navigation header to display the user's name alongside their email if present:
+  `{user.metadata?.name ? `${user.metadata.name} (${user.email})` : user.email}`
 
 #### [MODIFY] [page.tsx](file:///d:/Relipay%20Test/relipay-test/app/dashboard/billing/page.tsx)
-- Change the `auth` import from `@/lib/auth` to `@relipay/nextjs/server`.
-- Restore the navigation header containing the user's email address and the "Log Out" button.
-- Query active billing providers using `relipay.billing.getProviders()` and pass them to the client.
+- Update the navigation header to display the user's name alongside their email if present.
 
-#### [MODIFY] [actions.ts](file:///d:/Relipay%20Test/relipay-test/app/dashboard/billing/actions.ts)
-- Update `createCheckoutAction` to accept a `provider` parameter ('stripe' | 'paypal' | 'razorpay') and pass it to the SDK's `createCheckout` method.
-- Update the `auth` import statement to target `@relipay/nextjs/server`.
-
-#### [MODIFY] [billing-client.tsx](file:///d:/Relipay%20Test/relipay-test/app/dashboard/billing/billing-client.tsx)
-- Accept `providers` list from parent component.
-- Dynamically render checkout buttons for "Pay with Stripe" and "Pay with PayPal" depending on active application configurations, styling them nicely to fit brand aesthetics.
-
-#### [MODIFY] [todo-actions.ts](file:///d:/Relipay%20Test/relipay-test/app/dashboard/todo-actions.ts)
-- Update the `auth` import statement to target `@relipay/nextjs/server`.
+#### [MODIFY] [todo-workspace.tsx](file:///d:/Relipay%20Test/relipay-test/app/dashboard/todo-workspace.tsx)
+- Update `TodoWorkspaceProps`'s `user` type definition to include optional `metadata`.
+- Modify the personal workspace card:
+  - Display the first two letters of the name in the user avatar, falling back to the email.
+  - Display the name in place of the `"Personal Workspace"` header if present, showing the email as a secondary sub-header.
 
 ---
 
 ## Verification Plan
 
-### Automated Tests
+### Automated Verification
 - Validate TypeScript compilation by running:
   ```powershell
   npm run build
   ```
 
 ### Manual Verification
-1. Open `/dashboard/billing`.
-2. Check that pricing cards now list **Pay with Stripe** and **Pay with PayPal** options under the active plans.
-3. Click **Pay with Stripe**; verify you are redirected to the Stripe Checkout portal on the ReliPay server.
-4. Go back and click **Pay with PayPal**; verify you are redirected to the PayPal checkout flow.
+- Navigate to the registration page, register a new account with a name, email, and password.
+- Verify redirect to the dashboard page works.
+- Verify the header displays `[Name] ([Email])` correctly.
+- Verify the personal workspace card displays the name and initials properly.
+- Verify that logging out and logging back in still displays the name correctly.

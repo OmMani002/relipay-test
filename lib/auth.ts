@@ -4,6 +4,7 @@ export interface Session {
   user: {
     id: string;
     email: string;
+    metadata?: Record<string, any> | null;
   };
   accessToken: string;
 }
@@ -14,6 +15,7 @@ export async function auth(): Promise<Session | null> {
     user: {
       id: 'mock-user-id',
       email: 'guest-user@example.com',
+      metadata: { name: 'Guest User' },
     },
     accessToken: 'mock-access-token',
   };
@@ -26,17 +28,19 @@ export async function signIn(input: { email: string }) {
       user: {
         id: 'mock-user-id',
         email: input.email || 'guest-user@example.com',
+        metadata: { name: 'Guest User' },
       },
       accessToken: 'mock-access-token',
     },
   };
 }
 
-export async function signUp(input: { email: string }) {
+export async function signUp(input: { email: string; metadata?: Record<string, any> }) {
   return {
     user: {
       id: 'mock-user-id',
       email: input.email || 'guest-user@example.com',
+      metadata: input.metadata || null,
     },
     accessToken: 'mock-access-token',
   };

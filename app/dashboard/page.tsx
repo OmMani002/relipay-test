@@ -6,7 +6,12 @@ import TodoWorkspace from './todo-workspace';
 import Link from 'next/link';
 
 export default async function DashboardPage() {
-  const session = await auth();
+  let session = null;
+  try {
+    session = await auth();
+  } catch (error) {
+    console.warn("Dashboard page: Auth session could not be resolved:", error);
+  }
 
   // If no session exists, redirect back to login (the middleware also handles this, but this is a defensive check)
   if (!session) {
@@ -33,7 +38,9 @@ export default async function DashboardPage() {
           ReliPay Portal
         </Link>
         <div className="flex items-center gap-4">
-          <span className="text-xs text-zinc-400 font-mono">{user.email}</span>
+          <span className="text-xs text-zinc-400 font-mono">
+            {user.metadata && (user.metadata as any).name ? `${(user.metadata as any).name} (${user.email})` : user.email}
+          </span>
           <form action={logoutAction}>
             <button type="submit" className="btn-secondary py-1 px-3 text-xs">
               Log Out

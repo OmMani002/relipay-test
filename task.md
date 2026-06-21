@@ -1,19 +1,9 @@
-# Tasks: Restore ReliPay Authentication
+# Tasks: Add Name Field to Registration and UI
 
-- [x] Re-enable route protection in `middleware.ts`
-- [x] Restore homepage (`app/page.tsx`) welcome UI and session checks
-- [x] Implement `app/login/actions.ts` and `app/login/page.tsx`
-- [x] Implement `app/register/actions.ts` and `app/register/page.tsx`
-- [x] Implement `app/dashboard/actions.ts` for logout support
-- [x] Restore user email and logout button in `app/dashboard/page.tsx`
-- [x] Restore user email and logout button in `app/dashboard/billing/page.tsx`
-- [x] Update imports to `@relipay/nextjs/server` in:
-  - `app/dashboard/todo-actions.ts`
-  - `app/dashboard/billing/actions.ts`
-- [x] Verify everything compiles cleanly
-
-## Stripe & PayPal Billing Tasks
-- [x] Update `createCheckoutAction` in `app/dashboard/billing/actions.ts` to support provider argument
-- [x] Fetch providers using `getProviders()` in `app/dashboard/billing/page.tsx`
-- [x] Update `billing-client.tsx` to render Stripe and PayPal buttons
-- [x] Verify build compiles cleanly
+- [x] Add "Full Name" input field to registration page (`app/register/page.tsx`)
+- [x] Update registration action to extract name and pass in metadata to `signUp` (`app/register/actions.ts`)
+- [x] Update mock `auth.ts` to support metadata and mock user name (`lib/auth.ts`)
+- [x] Update dashboard page to display user name in header (`app/dashboard/page.tsx`)
+- [x] Update billing page to display user name in header (`app/dashboard/billing/page.tsx`)
+- [x] Update workspace component to support user metadata and display name/initials (`app/dashboard/todo-workspace.tsx`)
+- [ ] Verify build succeeds (`npm run build`)

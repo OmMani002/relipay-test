@@ -28,6 +28,18 @@ export default function RegisterPage() {
           )}
 
           <div className="form-group">
+            <label className="form-label" htmlFor="name">Full Name</label>
+            <input
+              id="name"
+              name="name"
+              type="text"
+              required
+              className="form-input"
+              placeholder="John Doe"
+            />
+          </div>
+
+          <div className="form-group">
             <label className="form-label" htmlFor="email">Email Address</label>
             <input
               id="email"

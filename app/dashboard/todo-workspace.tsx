@@ -15,6 +15,7 @@ interface TodoWorkspaceProps {
   user: {
     email: string;
     id: string;
+    metadata?: Record<string, any> | null;
   };
   planInfo: {
     tier: 'free' | 'monthly' | 'yearly';
@@ -266,10 +267,15 @@ export default function TodoWorkspace({
           <div className="absolute top-0 right-0 w-32 h-32 bg-indigo-500/5 rounded-full blur-2xl"></div>
           <div className="flex items-center gap-4">
             <div className="w-12 h-12 rounded-full bg-gradient-to-tr from-indigo-600 to-indigo-400 flex items-center justify-center font-bold text-lg text-white uppercase shadow-md select-none">
-              {user.email.substring(0, 2)}
+              {(user.metadata?.name as string || user.email).substring(0, 2)}
             </div>
             <div className="min-w-0 flex-1">
-              <h2 className="text-sm font-semibold text-white truncate">Personal Workspace</h2>
+              <h2 className="text-sm font-semibold text-white truncate">
+                {user.metadata?.name as string || 'Personal Workspace'}
+              </h2>
+              {user.metadata?.name && (
+                <p className="text-xs text-zinc-500 truncate mt-0.5">{user.email}</p>
+              )}
               <div className="flex flex-wrap items-center gap-1.5 mt-1.5">
                 <span className="px-2 py-0.5 rounded bg-indigo-500/10 text-indigo-400 border border-indigo-500/20 text-[9px] font-bold uppercase tracking-wider">
                   {planInfo.tier === 'free' ? 'Free Plan' : planInfo.tier === 'monthly' ? '₹100 Monthly' : '₹800 Yearly'}

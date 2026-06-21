@@ -2,7 +2,12 @@ import Link from "next/link";
 import { auth } from "@relipay/nextjs/server";
 
 export default async function Home() {
-  const session = await auth();
+  let session = null;
+  try {
+    session = await auth();
+  } catch (error) {
+    console.warn("Home page: Auth session could not be resolved:", error);
+  }
 
   return (
     <main className="relative flex flex-col items-center justify-center px-4 py-24 min-h-screen">
