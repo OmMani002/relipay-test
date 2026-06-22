@@ -48,7 +48,9 @@ export default function BillingClient({
     startTransition(async () => {
       try {
         const result = await createCheckoutAction(planSlug, provider);
-        if (result.url) {
+        if (result.error) {
+          setErrorMsg(result.error);
+        } else if (result.url) {
           window.location.href = result.url; // Redirect to hosted billing portal
         }
       } catch (error: any) {

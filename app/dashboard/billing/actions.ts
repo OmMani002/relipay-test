@@ -9,7 +9,7 @@ import { saveMockSubscription } from '../../../lib/db';
 export async function createCheckoutAction(planSlug: string, provider?: 'stripe' | 'paypal' | 'razorpay') {
   const session = await auth();
   if (!session) {
-    throw new Error('Unauthorized: You must be signed in to access billing checkout.');
+    return { error: 'Unauthorized: You must be signed in to access billing checkout.' };
   }
 
   // Define checkout redirection target pages
@@ -27,9 +27,9 @@ export async function createCheckoutAction(planSlug: string, provider?: 'stripe'
     return { url: outcome.url };
   } catch (error: any) {
     console.error('ReliPay Billing SDK Checkout Creation Failed:', error);
-    throw new Error(
-      error.message || 'ReliPay checkout is currently unavailable. Please check panel settings or use the local bypass.'
-    );
+    return {
+      error: error.message || 'ReliPay checkout is currently unavailable. Please check panel settings or use the local bypass.'
+    };
   }
 }
 
