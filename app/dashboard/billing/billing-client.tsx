@@ -3,7 +3,6 @@
 import { useState, useTransition } from 'react';
 import { 
   createCheckoutAction, 
-  upgradeMockSubscriptionAction, 
   resetToFreeAction 
 } from './actions';
 
@@ -53,7 +52,7 @@ export default function BillingClient({
           window.location.href = result.url; // Redirect to hosted billing portal
         }
       } catch (error: any) {
-        setErrorMsg(error.message || 'Failed to open billing portal. Please use Sandbox Quick-Pass.');
+        setErrorMsg(error.message || 'Failed to open billing portal. Please try again.');
       }
     });
   };
@@ -61,18 +60,6 @@ export default function BillingClient({
   // Determine enabled providers
   const hasStripe = providers.length === 0 || providers.some(p => p.provider === 'stripe');
   const hasPaypal = providers.length === 0 || providers.some(p => p.provider === 'paypal');
-
-  // Trigger local mock subscription bypass
-  const handleMockUpgrade = (tier: 'monthly' | 'yearly') => {
-    setErrorMsg(null);
-    startTransition(async () => {
-      try {
-        await upgradeMockSubscriptionAction(tier);
-      } catch (error: any) {
-        setErrorMsg('Failed to apply sandbox mock subscription.');
-      }
-    });
-  };
 
   // Downgrade user back to Free
   const handleResetToFree = () => {
@@ -87,9 +74,10 @@ export default function BillingClient({
   };
 
   // Format currency display (amount is in smallest units, e.g. cents/paise)
+  // Use a fixed 'en-US' locale to ensure consistent formatting between server and client and prevent hydration mismatches
   const formatPrice = (amount: number, currency: string) => {
     const value = amount / 100;
-    return new Intl.NumberFormat(undefined, {
+    return new Intl.NumberFormat('en-US', {
       style: 'currency',
       currency: currency,
       maximumFractionDigits: 0,
@@ -125,7 +113,7 @@ export default function BillingClient({
           </div>
           <div>
             <h4 className="text-sm font-bold text-white">Checkout Cancelled</h4>
-            <p className="text-xs text-zinc-400 mt-0.5">No charges were made. You can try checkouts again or use Sandbox Quick-Pass.</p>
+            <p className="text-xs text-zinc-400 mt-0.5">No charges were made. You can try checkouts again.</p>
           </div>
         </div>
       )}
@@ -150,11 +138,6 @@ export default function BillingClient({
           <div className="space-y-2">
             <div className="flex items-center gap-2.5">
               <span className="text-xs font-semibold text-zinc-500 uppercase tracking-widest">Active Level</span>
-              {currentPlan.isMock && (
-                <span className="px-2 py-0.5 rounded bg-amber-500/10 text-amber-400 border border-amber-500/20 text-[9px] font-bold uppercase tracking-wider">
-                  Sandbox Quick-Pass Active
-                </span>
-              )}
             </div>
             <h2 className="text-xl font-bold text-white capitalize">
               {currentPlan.tier === 'free' ? 'Free Tier Plan' : currentPlan.tier === 'monthly' ? '100 INR Monthly Tier' : '800 INR Yearly Tier'}
@@ -193,7 +176,7 @@ export default function BillingClient({
             
             {currentPlan.expiresAt && (
               <div className="text-[10px] text-zinc-500 border-t border-zinc-800/80 pt-2 mt-1">
-                Expires: {new Date(currentPlan.expiresAt).toLocaleDateString(undefined, { month: 'short', day: 'numeric', year: 'numeric' })}
+                Expires: {new Date(currentPlan.expiresAt).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}
               </div>
             )}
           </div>
@@ -334,13 +317,6 @@ export default function BillingClient({
                     Pay with PayPal
                   </button>
                 )}
-                <button
-                  disabled={isPending}
-                  onClick={() => handleMockUpgrade('monthly')}
-                  className="w-full btn-secondary py-2 px-4 text-xs border-amber-500/20 hover:border-amber-500/40 text-amber-400/90"
-                >
-                  Sandbox Quick-Pass
-                </button>
               </>
             )}
           </div>
@@ -420,13 +396,6 @@ export default function BillingClient({
                     Pay with PayPal
                   </button>
                 )}
-                <button
-                  disabled={isPending}
-                  onClick={() => handleMockUpgrade('yearly')}
-                  className="w-full btn-secondary py-2 px-4 text-xs border-amber-500/20 hover:border-amber-500/40 text-amber-400/90"
-                >
-                  Sandbox Quick-Pass
-                </button>
               </>
             )}
           </div>
