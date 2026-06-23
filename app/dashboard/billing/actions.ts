@@ -1,6 +1,7 @@
 'use server';
 
 import { auth } from '@relipay/nextjs/server';
+import { headers } from 'next/headers';
 import { revalidatePath } from 'next/cache';
 import { relipay } from '../../../lib/relipay';
 import { saveMockSubscription } from '../../../lib/db';
@@ -12,9 +13,15 @@ export async function createCheckoutAction(planSlug: string, provider?: 'stripe'
     return { error: 'Unauthorized: You must be signed in to access billing checkout.' };
   }
 
+  // Dynamically determine the application URL from request headers
+  const headersList = await headers();
+  const host = headersList.get('x-forwarded-host') || headersList.get('host') || 'localhost:3000';
+  const proto = headersList.get('x-forwarded-proto') || (host.includes('localhost') ? 'http' : 'https');
+  const appUrl = process.env.NEXT_PUBLIC_APP_URL || `${proto}://${host}`;
+
   // Define checkout redirection target pages
-  const successUrl = `${process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000'}/dashboard/billing?status=success`;
-  const cancelUrl = `${process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000'}/dashboard/billing?status=cancelled`;
+  const successUrl = `${appUrl}/dashboard/billing?status=success`;
+  const cancelUrl = `${appUrl}/dashboard/billing?status=cancelled`;
 
   try {
     const outcome = await relipay.billing.createCheckout(session.accessToken, {
