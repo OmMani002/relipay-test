@@ -223,16 +223,22 @@ export async function getUserPlan(userId: string, accessToken?: string): Promise
   if (accessToken && accessToken !== 'mock-access-token') {
     try {
       const activeSub = await relipay.billing.getSubscription(accessToken);
-      if (activeSub && activeSub.status === 'ACTIVE') {
+      console.log('[DEBUG] getUserPlan: activeSub retrieved:', JSON.stringify(activeSub, null, 2));
+      
+      if (activeSub && (activeSub.status === 'ACTIVE' || activeSub.status === 'PENDING')) {
         const plans = await relipay.billing.getPlans();
         const activePlan = plans.find(p => p.id === activeSub.planId);
+        console.log('[DEBUG] getUserPlan: activePlan matched:', JSON.stringify(activePlan, null, 2));
         
         if (activePlan) {
           const planSlug = activePlan.slug.toLowerCase();
-          if (planSlug.includes('yearly') || planSlug.includes('800')) {
+          const isYearly = activePlan.interval === 'YEAR' || planSlug.includes('yearly') || planSlug.includes('800');
+          const isMonthly = activePlan.interval === 'MONTH' || planSlug.includes('monthly') || planSlug.includes('100');
+          
+          if (isYearly) {
             return { tier: 'yearly', isMock: false, expiresAt: activeSub.currentPeriodEnd };
           }
-          if (planSlug.includes('monthly') || planSlug.includes('100')) {
+          if (isMonthly) {
             return { tier: 'monthly', isMock: false, expiresAt: activeSub.currentPeriodEnd };
           }
         }
